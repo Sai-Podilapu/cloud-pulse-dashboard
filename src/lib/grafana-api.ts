@@ -86,3 +86,47 @@ export async function listMetrics(dsUid: string, region: string, namespace: stri
     return toStrList(await r.json());
   } catch { return []; }
 }
+
+export async function listDimensionKeys(dsUid: string, region: string, namespace: string, metricName: string): Promise<string[]> {
+  try {
+    const r = await fetch(
+      `/grafana/api/datasources/uid/${dsUid}/resources/dimension-keys?region=${region}&namespace=${encodeURIComponent(namespace)}&metricName=${encodeURIComponent(metricName)}`
+    );
+    if (!r.ok) return [];
+    return toStrList(await r.json());
+  } catch { return []; }
+}
+
+export async function listDimensionValues(
+  dsUid: string, region: string, namespace: string, metricName: string, dimensionKey: string
+): Promise<string[]> {
+  try {
+    const r = await fetch(
+      `/grafana/api/datasources/uid/${dsUid}/resources/dimension-values?region=${region}&namespace=${encodeURIComponent(namespace)}&metricName=${encodeURIComponent(metricName)}&dimensionKey=${encodeURIComponent(dimensionKey)}`
+    );
+    if (!r.ok) return [];
+    return toStrList(await r.json());
+  } catch { return []; }
+}
+
+export const ALL_REGIONS = [
+  "us-east-1","us-east-2","us-west-1","us-west-2",
+  "af-south-1","ap-east-1","ap-south-1","ap-south-2",
+  "ap-southeast-1","ap-southeast-2","ap-southeast-3","ap-southeast-4","ap-southeast-5",
+  "ap-northeast-1","ap-northeast-2","ap-northeast-3",
+  "ca-central-1","ca-west-1",
+  "eu-central-1","eu-central-2","eu-west-1","eu-west-2","eu-west-3",
+  "eu-north-1","eu-south-1","eu-south-2",
+  "il-central-1","me-south-1","me-central-1","mx-central-1","sa-east-1",
+];
+
+export async function listRegions(dsUid: string): Promise<string[]> {
+  try {
+    const r = await fetch(`/grafana/api/datasources/uid/${dsUid}/resources/regions`);
+    if (!r.ok) throw new Error();
+    const list = toStrList(await r.json()).filter((x) => x !== "default");
+    return list.length > 3 ? list : ALL_REGIONS;
+  } catch {
+    return ALL_REGIONS;
+  }
+}

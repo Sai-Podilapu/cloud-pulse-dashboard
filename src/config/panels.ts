@@ -6,6 +6,7 @@ export type Panel = {
   statistic: "Average" | "Sum" | "Maximum";
   period: string;
   series: MetricSeries[];
+  dimensions?: Record<string, string>; // custom panels: explicit dims. absent = EC2 default (selected instance)
 };
 
 export const panels: Panel[] = [

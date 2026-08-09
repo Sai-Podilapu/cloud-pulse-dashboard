@@ -1,20 +1,22 @@
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useTimeRange } from "@/lib/time-range";
 import type { Panel } from "@/config/panels";
 import { useMetric, formatValue } from "@/hooks/use-metric";
 
 const ACCENT = "#4f8ff7";
 
-export function PanelCard({ panel, dsUid, instanceId, region }: { panel: Panel; dsUid: string; instanceId: string; region: string }) {
+export function PanelCard({ panel, dsUid, instanceIds, region }: {
+  panel: Panel; dsUid: string; instanceIds: string[]; region: string;
+}) {
   const { range } = useTimeRange();
-  const { data, loading, error, retry } = useMetric(panel, range, dsUid, instanceId, region);
-  const latest = data.length ? data[data.length - 1][panel.series[0].label] : undefined;
+  const { data, series, loading, error, retry } = useMetric(panel, range, dsUid, instanceIds, region);
+  const latest = data.length && series.length ? data[data.length - 1][series[0].key] : undefined;
 
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-card">
       <header className="flex items-center justify-between border-b border-border px-4 py-3">
         <h2 className="truncate text-sm font-medium text-foreground">{panel.title}</h2>
-        {latest !== undefined && (
+        {latest !== undefined && series.length === 1 && (
           <span className="text-base font-semibold" style={{ color: ACCENT }}>
             {formatValue(latest, panel.unit)}
           </span>
@@ -36,9 +38,9 @@ export function PanelCard({ panel, dsUid, instanceId, region }: { panel: Panel; 
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <defs>
-                {panel.series.map((s, i) => (
-                  <linearGradient key={i} id={`g${panel.title.replace(/\W/g, "")}${i}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={s.color ?? ACCENT} stopOpacity={0.25} />
+                {series.map((s, i) => (
+                  <linearGradient key={s.key} id={`g${panel.title.replace(/\W/g, "")}${i}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={s.color ?? ACCENT} stopOpacity={0.2} />
                     <stop offset="100%" stopColor={s.color ?? ACCENT} stopOpacity={0} />
                   </linearGradient>
                 ))}
@@ -52,8 +54,9 @@ export function PanelCard({ panel, dsUid, instanceId, region }: { panel: Panel; 
                 contentStyle={{ background: "#181b1f", border: "1px solid #2c3235", borderRadius: 8, fontSize: 12 }}
                 labelFormatter={(t) => new Date(t as number).toLocaleString()}
                 formatter={(value: number, name: string) => [formatValue(value, panel.unit), name]} />
-              {panel.series.map((s, i) => (
-                <Area key={s.label} type="monotone" dataKey={s.label} stroke={s.color ?? ACCENT} strokeWidth={2}
+              {series.length > 1 && <Legend wrapperStyle={{ fontSize: 11 }} />}
+              {series.map((s, i) => (
+                <Area key={s.key} type="monotone" dataKey={s.key} stroke={s.color ?? ACCENT} strokeWidth={2}
                   fill={`url(#g${panel.title.replace(/\W/g, "")}${i})`} dot={false} connectNulls isAnimationActive={false} />
               ))}
             </AreaChart>
@@ -61,7 +64,7 @@ export function PanelCard({ panel, dsUid, instanceId, region }: { panel: Panel; 
         )}
         {!error && !loading && data.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-xs text-muted-foreground">No data yet — new metrics can take a few minutes.</p>
+            <p className="text-xs text-muted-foreground">No data — select at least one instance, or metrics may take a few minutes.</p>
           </div>
         )}
       </div>
