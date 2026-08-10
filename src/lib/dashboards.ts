@@ -1,38 +1,49 @@
 import type { Panel } from "@/config/panels";
 import { panels as defaultPanels } from "@/config/panels";
+import { authFetch } from "@/lib/auth";
 
 export type Dashboard = { id: string; name: string; panels: Panel[] };
 
-const KEY = "cloudpulse.dashboards";
+const LOCAL_KEY = "cloudpulse.dashboards";
 const ACTIVE_KEY = "cloudpulse.activeDashboard";
 
-export function loadDashboards(): Dashboard[] {
-  if (typeof window === "undefined") return [];
+export async function loadDashboards(): Promise<Dashboard[]> {
+  // 1. Server is the source of truth
   try {
-    const raw = JSON.parse(localStorage.getItem(KEY) ?? "null");
-    if (Array.isArray(raw) && raw.length) return raw;
-  } catch { /* fall through to seed */ }
-  // First run: seed with the built-in panels + any panels from the old system
-  let legacy: Panel[] = [];
-  try { legacy = JSON.parse(localStorage.getItem("cloudpulse.customPanels") ?? "[]"); } catch { /* ignore */ }
-  const seed: Dashboard[] = [{ id: "default", name: "Overview", panels: [...defaultPanels, ...legacy] }];
-  localStorage.setItem(KEY, JSON.stringify(seed));
+    const r = await authFetch("/dashboards-api/dashboards");
+    if (r.ok) {
+      const list = await r.json();
+      if (Array.isArray(list) && list.length) return list;
+    }
+  } catch { /* fall through */ }
+
+  // 2. Server empty: migrate this browser's old localStorage dashboards, or seed defaults
+  let local: Dashboard[] = [];
+  try {
+    const raw = JSON.parse(localStorage.getItem(LOCAL_KEY) ?? "null");
+    if (Array.isArray(raw) && raw.length) local = raw;
+  } catch { /* ignore */ }
+
+  const seed: Dashboard[] = local.length
+    ? local
+    : [{ id: "default", name: "Overview", panels: [...defaultPanels] }];
+
+  saveDashboards(seed); // push to server
   return seed;
 }
 
 export function saveDashboards(d: Dashboard[]) {
-  localStorage.setItem(KEY, JSON.stringify(d));
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(d)); } catch { /* offline backup only */ }
+  authFetch("/dashboards-api/dashboards", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(d),
+  }).catch(() => {});
 }
 
 export function loadActiveId(): string {
   if (typeof window === "undefined") return "default";
   return localStorage.getItem(ACTIVE_KEY) ?? "default";
 }
-
-export function saveActiveId(id: string) {
-  localStorage.setItem(ACTIVE_KEY, id);
-}
-
-export function newId(): string {
-  return `d-${Date.now()}-${Math.floor(Math.random() * 1e4)}`;
-}
+export function saveActiveId(id: string) { localStorage.setItem(ACTIVE_KEY, id); }
+export function newId(): string { return `d-${Date.now()}-${Math.floor(Math.random() * 1e4)}`; }

@@ -29,6 +29,18 @@ function Sidebar() {
           CloudPulse
         </span>
       </div>
+      <Link
+        to="/providers"
+        className="mx-3 mt-3 flex items-center gap-2.5 rounded-md border border-border bg-background/60 px-3 py-2 transition-colors hover:border-[#ff9900]/50 hover:bg-white/[0.03]"
+      >
+        <span className="grid h-6 w-6 shrink-0 place-items-center rounded text-[10px] font-bold text-white" style={{ background: "#ff9900" }}>
+          AWS
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-xs font-medium text-foreground">Amazon Web Services</span>
+          <span className="block text-[10px] text-muted-foreground">switch provider</span>
+        </span>
+      </Link>
       <nav className="flex flex-col gap-0.5 p-3">
         {NAV.map((item) => (
           <Link

@@ -1,3 +1,5 @@
+import { authFetch } from "@/lib/auth";
+
 export type Account = {
   id: number; uid: string; name: string; type: string;
   jsonData?: { defaultRegion?: string };
@@ -27,14 +29,14 @@ function toStrList(json: unknown): string[] {
 }
 
 export async function listAccounts(): Promise<Account[]> {
-  const r = await fetch("/grafana/api/datasources");
+  const r = await authFetch("/grafana/api/datasources");
   if (!r.ok) throw new Error("Failed to load accounts");
   const all = await r.json();
   return (Array.isArray(all) ? all : []).filter((d: Account) => d.type === "cloudwatch");
 }
 
 export async function addAccount(name: string, accessKey: string, secretKey: string, region: string) {
-  const r = await fetch("/grafana/api/datasources", {
+  const r = await authFetch("/grafana/api/datasources", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -51,13 +53,13 @@ export async function addAccount(name: string, accessKey: string, secretKey: str
 }
 
 export async function removeAccount(uid: string) {
-  const r = await fetch(`/grafana/api/datasources/uid/${uid}`, { method: "DELETE" });
+  const r = await authFetch(`/grafana/api/datasources/uid/${uid}`, { method: "DELETE" });
   if (!r.ok) throw new Error("Failed to remove account");
 }
 
 export async function listInstances(dsUid: string, region: string): Promise<string[]> {
   try {
-    const r = await fetch(
+    const r = await authFetch(
       `/grafana/api/datasources/uid/${dsUid}/resources/dimension-values?region=${region}&namespace=AWS/EC2&dimensionKey=InstanceId&metricName=CPUUtilization`
     );
     if (!r.ok) return [];
@@ -67,7 +69,7 @@ export async function listInstances(dsUid: string, region: string): Promise<stri
 
 export async function listNamespaces(dsUid: string, region: string): Promise<string[]> {
   try {
-    const r = await fetch(`/grafana/api/datasources/uid/${dsUid}/resources/namespaces?region=${region}`);
+    const r = await authFetch(`/grafana/api/datasources/uid/${dsUid}/resources/namespaces?region=${region}`);
     if (!r.ok) throw new Error();
     const list = toStrList(await r.json());
     if (list.length) return list;
@@ -79,7 +81,7 @@ export async function listNamespaces(dsUid: string, region: string): Promise<str
 
 export async function listMetrics(dsUid: string, region: string, namespace: string): Promise<string[]> {
   try {
-    const r = await fetch(
+    const r = await authFetch(
       `/grafana/api/datasources/uid/${dsUid}/resources/metrics?region=${region}&namespace=${encodeURIComponent(namespace)}`
     );
     if (!r.ok) return [];
@@ -89,7 +91,7 @@ export async function listMetrics(dsUid: string, region: string, namespace: stri
 
 export async function listDimensionKeys(dsUid: string, region: string, namespace: string, metricName: string): Promise<string[]> {
   try {
-    const r = await fetch(
+    const r = await authFetch(
       `/grafana/api/datasources/uid/${dsUid}/resources/dimension-keys?region=${region}&namespace=${encodeURIComponent(namespace)}&metricName=${encodeURIComponent(metricName)}`
     );
     if (!r.ok) return [];
@@ -101,7 +103,7 @@ export async function listDimensionValues(
   dsUid: string, region: string, namespace: string, metricName: string, dimensionKey: string
 ): Promise<string[]> {
   try {
-    const r = await fetch(
+    const r = await authFetch(
       `/grafana/api/datasources/uid/${dsUid}/resources/dimension-values?region=${region}&namespace=${encodeURIComponent(namespace)}&metricName=${encodeURIComponent(metricName)}&dimensionKey=${encodeURIComponent(dimensionKey)}`
     );
     if (!r.ok) return [];
@@ -122,7 +124,7 @@ export const ALL_REGIONS = [
 
 export async function listRegions(dsUid: string): Promise<string[]> {
   try {
-    const r = await fetch(`/grafana/api/datasources/uid/${dsUid}/resources/regions`);
+    const r = await authFetch(`/grafana/api/datasources/uid/${dsUid}/resources/regions`);
     if (!r.ok) throw new Error();
     const list = toStrList(await r.json()).filter((x) => x !== "default");
     return list.length > 3 ? list : ALL_REGIONS;

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Panel } from "@/config/panels";
+import { authFetch } from "@/lib/auth";
 import type { TimeRangeValue } from "@/lib/time-range";
 
 export type MetricRow = Record<string, number> & { time: number };
@@ -53,7 +54,7 @@ export function useMetric(panel: Panel, range: TimeRangeValue, dsUid: string, in
     });
 
     try {
-      const res = await fetch("/grafana/api/ds/query", {
+      const res = await authFetch("/grafana/api/ds/query", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ from: `now-${range}`, to: "now", queries: qs.map((q) => q.body) }),
         signal: controller.signal,

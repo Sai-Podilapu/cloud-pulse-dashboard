@@ -7,6 +7,7 @@ import { listAccounts, listInstances, listRegions, ALL_REGIONS, type Account } f
 import {
   loadDashboards, saveDashboards, loadActiveId, saveActiveId, newId, type Dashboard,
 } from "@/lib/dashboards";
+import { useRequireAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({ meta: [{ title: "Overview - CloudPulse Monitoring" }] }),
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Overview() {
+  useRequireAuth();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountUid, setAccountUid] = useState("");
   const [instances, setInstances] = useState<string[]>([]);
@@ -26,7 +28,7 @@ function Overview() {
   const [editIndex, setEditIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    setDashboards(loadDashboards());
+    loadDashboards().then(setDashboards);
     setActiveId(loadActiveId());
     listAccounts().then((a) => {
       setAccounts(a);
