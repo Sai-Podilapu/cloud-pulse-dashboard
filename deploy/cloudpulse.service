@@ -1,0 +1,13 @@
+[Unit]
+Description=CloudPulse Dashboard
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/cloud-pulse-dashboard
+Environment=PORT=8080
+ExecStart=/usr/bin/node /home/ubuntu/cloud-pulse-dashboard/.output/server/index.mjs
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+[Unit]
+Description=CloudPulse Alerts Service
+After=network.target
+
+[Service]
+User=ubuntu
+Environment=GRAFANA_TOKEN=REPLACE_ME
+Environment=GMAIL_USER=podilapusai123@gmail.com
+Environment=GMAIL_PASS=REPLACE_ME
+ExecStart=/usr/bin/node /home/ubuntu/cloudpulse-auth/alerts.mjs
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

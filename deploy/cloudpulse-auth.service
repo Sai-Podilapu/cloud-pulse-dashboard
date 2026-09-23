@@ -1,0 +1,12 @@
+[Unit]
+Description=CloudPulse Auth Service
+After=network.target
+
+[Service]
+User=ubuntu
+Environment=INVITE_CODE=REPLACE_ME
+ExecStart=/usr/bin/node /home/ubuntu/cloudpulse-auth/register.mjs
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
